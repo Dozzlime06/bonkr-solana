@@ -1,52 +1,66 @@
-name: Build Solana Program
+name: Build Anchor Program
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    env:
+      CARGO_TERM_COLOR: always
+      SOLANA_VERSION: "1.18.26"
+      ANCHOR_VERSION: "0.29.0"
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        
-      - name: Cache Cargo
+
+      - name: Cache cargo registry
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          
-      - name: Install Anchor
+
+      - name: Install Anchor CLI
         run: |
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install 0.29.0
           avm use 0.29.0
           echo "$HOME/.avm/bin" >> $GITHUB_PATH
-          
-      - name: Build Program
+
+      - name: Verify toolchain
+        run: |
+          solana --version
+          anchor --version
+
+      - name: Build program
         run: anchor build
-          
-      - name: Upload Program Artifact
+
+      - name: Upload program artifact
         uses: actions/upload-artifact@v4
         with:
           name: bonkr-program
           path: target/deploy/bonkr.so
-          
+          if-no-files-found: error
+
       - name: Upload IDL
         uses: actions/upload-artifact@v4
         with:
           name: bonkr-idl
           path: target/idl/bonkr.json
+          if-no-files-found: error
