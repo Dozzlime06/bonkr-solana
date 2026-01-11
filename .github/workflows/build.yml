@@ -8,10 +8,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    container:
-      image: backpackapp/build:v0.31.1
     steps:
       - uses: actions/checkout@v4
+
+      - uses: metaDAOproject/setup-anchor@v3
+        with:
+          anchor-version: '0.31.1'
+          solana-version: '2.1.21'
+          node-version: '20'
 
       - name: Check versions
         run: |
