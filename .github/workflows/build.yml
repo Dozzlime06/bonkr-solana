@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  RUSTUP_TOOLCHAIN: 1.82.0
+  RUSTUP_TOOLCHAIN: 1.83.0
 
 jobs:
   build:
@@ -14,10 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Rust 1.82
+      - name: Setup Rust 1.83
         run: |
-          rustup toolchain install 1.82.0 --profile minimal
-          rustup default 1.82.0
+          rustup toolchain install 1.83.0 --profile minimal
+          rustup default 1.83.0
           rustc --version
           cargo --version
 
