@@ -43,8 +43,18 @@ jobs:
           rm -f Cargo.lock
 
       - name: Setup wallet
+        env:
+          WALLET_KEY: ${{ secrets.WALLET_KEYPAIR }}
+          RPC: ${{ secrets.RPC_URL }}
         run: |
           mkdir -p ~/.config/solana
-          echo "${{ secrets.WALLET_KEYPAIR }}" | base64 -d > ~/.config/solana/id.json
+          echo "$WALLET_KEY" | base64 -d > ~/.config/solana/id.json
           chmod 600 ~/.config/solana/id.json
-          solana config set --url "$
+          solana config set --url "$RPC"
+          solana config set --keypair ~/.config/solana/id.json
+
+      - name: Build
+        run: anchor build
+
+      - name: Deploy
+        run: anchor deploy --provider.cluster mainnet
