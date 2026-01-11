@@ -11,10 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Rust 1.79
+      - name: Setup Rust 1.82
         run: |
-          rustup toolchain install 1.79.0 --profile minimal
-          rustup default 1.79.0
+          rustup toolchain install 1.82.0 --profile minimal
+          rustup default 1.82.0
           rustc --version
 
       - name: Install Solana CLI v1.18
