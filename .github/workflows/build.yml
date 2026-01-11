@@ -37,16 +37,14 @@ jobs:
           avm install 0.31.1
           avm use 0.31.1
 
+      - name: Fix version mismatch
+        run: |
+          sed -i 's/anchor_version = "0.28.0"/anchor_version = "0.31.1"/' Anchor.toml
+          rm -f Cargo.lock
+
       - name: Setup wallet
         run: |
           mkdir -p ~/.config/solana
           echo "${{ secrets.WALLET_KEYPAIR }}" | base64 -d > ~/.config/solana/id.json
           chmod 600 ~/.config/solana/id.json
-          solana config set --url "${{ secrets.RPC_URL }}"
-          solana config set --keypair ~/.config/solana/id.json
-
-      - name: Build
-        run: anchor build
-
-      - name: Deploy
-        run: anchor deploy --provider.cluster mainnet
+          solana config set --url "$
