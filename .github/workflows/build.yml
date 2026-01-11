@@ -8,39 +8,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    container:
+      image: backpackapp/build:v0.31.1
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Rust dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            solana-program/bonkr/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Setup Rust 1.85
+      - name: Check versions
         run: |
-          rustup toolchain install 1.85.0 --profile minimal
-          rustup default 1.85.0
           rustc --version
-
-      - name: Install Solana CLI v2.1
-        run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.21/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-
-      - name: Verify Solana
-        run: solana --version
-
-      - name: Install Anchor CLI directly
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor --tag v0.31.1 anchor-cli --locked
+          solana --version
           anchor --version
 
       - name: Setup wallet
@@ -56,15 +32,11 @@ jobs:
           solana balance
 
       - name: Build
-        working-directory: solana-program/bonkr
         run: anchor build
 
       - name: Deploy
         if: github.event_name == 'workflow_dispatch'
-        working-directory: solana-program/bonkr
-        run: |
-          echo "Deploying to mainnet..."
-          anchor deploy --provider.cluster mainnet
+        run: anchor deploy --provider.cluster mainnet
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -72,5 +44,5 @@ jobs:
         with:
           name: program-artifacts
           path: |
-            solana-program/bonkr/target/deploy/*.so
-            solana-program/bonkr/target/idl/*.json
+            target/deploy/*.so
+            target/idl/*.json
