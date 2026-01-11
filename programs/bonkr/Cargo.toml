@@ -1,7 +1,7 @@
 [package]
 name = "bonkr"
 version = "0.1.0"
-description = "Bonkr Token Launchpad"
+description = "Bonkr Token Launchpad - Solana"
 edition = "2021"
 
 [lib]
@@ -9,12 +9,12 @@ crate-type = ["cdylib", "lib"]
 name = "bonkr"
 
 [features]
+default = []
+cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
-cpi = ["no-entrypoint"]
-default = []
 
 [dependencies]
-anchor-lang = "0.29.0"
-anchor-spl = "0.29.0"
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
