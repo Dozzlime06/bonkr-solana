@@ -1,0 +1,59 @@
+name: Deploy Bonkr to Solana
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    env:
+      SOLANA_VERSION: "1.18.26"
+      ANCHOR_VERSION: "0.29.0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install Anchor CLI
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install 0.29.0
+          avm use 0.29.0
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
+
+      - name: Setup Wallet
+        run: |
+          mkdir -p ~/.config/solana
+          echo '${{ secrets.WALLET_KEYPAIR }}' | base64 -d > ~/.config/solana/id.json
+          solana config set --url ${{ secrets.RPC_URL }}
+          solana config set --keypair ~/.config/solana/id.json
+          echo "Wallet address:"
+          solana address
+          echo "Balance:"
+          solana balance || echo "Could not get balance"
+
+      - name: Build Program
+        run: anchor build
+
+      - name: Deploy Program
+        run: |
+          echo "=== DEPLOYING PROGRAM ==="
+          solana program deploy target/deploy/bonkr.so --output json 2>&1 | tee deploy-result.json
+          echo "=== DEPLOYMENT COMPLETE ==="
+          cat deploy-result.json
