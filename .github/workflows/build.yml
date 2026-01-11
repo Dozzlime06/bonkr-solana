@@ -16,6 +16,20 @@ jobs:
           rustup toolchain install 1.82.0 --profile minimal
           rustup default 1.82.0
           rustc --version
+          cargo --version
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            solana-program/bonkr/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Install Solana CLI v1.18
         run: |
@@ -27,9 +41,10 @@ jobs:
 
       - name: Install Anchor CLI
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --force
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install 0.30.1
           avm use 0.30.1
+          anchor --version
 
       - name: Setup wallet
         env:
@@ -41,11 +56,24 @@ jobs:
           chmod 600 ~/.config/solana/id.json
           solana config set --url "$RPC"
           solana config set --keypair ~/.config/solana/id.json
+          solana balance
 
       - name: Build
         working-directory: solana-program/bonkr
         run: anchor build
 
       - name: Deploy
+        if: github.event_name == 'workflow_dispatch'
         working-directory: solana-program/bonkr
-        run: anchor deploy --provider.cluster mainnet
+        run: |
+          echo "Deploying to mainnet..."
+          anchor deploy --provider.cluster mainnet
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: program-artifacts
+          path: |
+            solana-program/bonkr/target/deploy/*.so
+            solana-program/bonkr/target/idl/*.json
