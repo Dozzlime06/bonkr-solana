@@ -11,20 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fix Anchor version
+        run: |
+          rm -f Cargo.lock
+          cat Anchor.toml | sed 's/anchor_version = "0.28.0"/anchor_version = "0.31.1"/' > Anchor.toml.new
+          mv Anchor.toml.new Anchor.toml
+          cat Anchor.toml
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.85.0
-
-      - name: Cache cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: cargo-1.85-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install Solana CLI
         run: |
@@ -36,11 +33,6 @@ jobs:
           cargo install --git https://github.com/coral-xyz/anchor avm --force
           avm install 0.31.1
           avm use 0.31.1
-
-      - name: Fix version mismatch
-        run: |
-          sed -i 's/anchor_version = "0.28.0"/anchor_version = "0.31.1"/' Anchor.toml
-          rm -f Cargo.lock
 
       - name: Setup wallet
         env:
